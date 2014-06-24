@@ -5,7 +5,7 @@
 //            See https://github.com/lukelex/courier.js/blob/master/LICENSE
 // ==========================================================================
 
-// Version: 0.3.1 | From: 25-6-2014
+// Version: 0.3.2 | From: 25-6-2014
 
 (function( window ){
   window.Courier = function Courier(){
