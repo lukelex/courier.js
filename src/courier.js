@@ -1,4 +1,4 @@
-(function(window){
+(function( window ){
   window.Courier = function Courier(){
     var subscriptions = {};
 
@@ -71,4 +71,4 @@
                  .replace(/(^\/|\/$)/g, "");
     }
   }
-})(window);
+})( window );

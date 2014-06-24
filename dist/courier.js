@@ -5,9 +5,9 @@
 //            See https://github.com/lukelex/courier.js/blob/master/LICENSE
 // ==========================================================================
 
-// Version: 0.3.1 | From: 22-6-2014
+// Version: 0.3.1 | From: 25-6-2014
 
-(function(window){
+(function( window ){
   window.Courier = function Courier(){
     var subscriptions = {};
 
@@ -80,4 +80,4 @@
                  .replace(/(^\/|\/$)/g, "");
     }
   }
-})(window);
+})( window );
