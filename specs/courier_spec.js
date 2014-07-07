@@ -9,7 +9,7 @@ describe("Courier", function(){
     it("should be able to send to one box", function(){
       var courier = new Courier(),
           box = "create-item",
-          opener = jasmine.createSpy('createBoxOpener');
+          opener = jasmine.createSpy("createBoxOpener");
 
       courier.receive(box, opener);
 
@@ -23,8 +23,8 @@ describe("Courier", function(){
       var courier = new Courier(),
           createBox = "create-item",
           updateBox = "updated-item",
-          createBoxOpener = jasmine.createSpy('createBoxOpener'),
-          updateBoxOpener = jasmine.createSpy('updateBoxOpener');
+          createBoxOpener = jasmine.createSpy("createBoxOpener"),
+          updateBoxOpener = jasmine.createSpy("updateBoxOpener");
 
       courier.receive(createBox, createBoxOpener);
       courier.receive(updateBox, updateBoxOpener);

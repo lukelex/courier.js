@@ -1,8 +1,6 @@
 #Courier.js
 
-Simple pub-sub for JavaScript
-
-Enables a controller/behavior to send and receive messages from another controller/behavior.
+Simple pub-sub for JavaScript.
 
 ##Using it
 ```javascript
@@ -14,8 +12,10 @@ courier.receive("new-message", function(msg){
   ...
 });
 
-// send a new message
-// can be either a String or a JS Object (POJO)
+// sending a new message
+// the first parameter is the message identifier
+// the second parameter can be anything
+// and will just be forwarded to the receiver
 courier.send("new-message", {
   your: "message"
 });
@@ -34,5 +34,16 @@ courier.send(/[Aa]\s(regex)?\ssender/, {
 
 courier.receive(/[Aa]\s(regex)?\sreceiver/, function(msg){
   ...
+});
+```
+
+###Unsubscribe
+
+Courier allows you to unsubscribe to any message with the given receiver returned function, like so:
+
+```javascript
+var unsubscribe = courier.receive("one-time-receiver", function(msg){
+  // do something and unsubscribe
+  unsubscribe() // this will notofy courier to remove this hook
 });
 ```
