@@ -13,17 +13,18 @@
       return unsubscribe.bind( {}, subscription );
     };
 
-    this.send = function send( box, message, options ){
+    this.send = function send( box, message, options, callback ){
       var i = 0,
           foundAny = false;
 
-      options = options || { throwOnMissing: true };
+      callback = is( options, "Function" ) ? options : ( callback || function(){} );
+      options = is( options, "Object" ) ? options : { throwOnMissing: true };
 
       fetchSubscriptions( box , function( openers ){
         foundAny = true;
         i = openers.length;
         while ( i-- ) {
-          openers[ i ].opener( message );
+          callback( openers[ i ].opener( message ) );
         }
       });
 
@@ -70,5 +71,9 @@
       return name.toString()
                  .replace(/(^\/|\/$)/g, "");
     }
+  }
+
+  function is( func, type ) {
+    return func && {}.toString.call(func) === "[object " + type + "]";
   }
 })( window );

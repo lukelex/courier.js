@@ -150,5 +150,41 @@ describe("Courier", function(){
         courier.send("missing-message", {}, {throwOnMissing: false});
       }).not.toThrow();
     });
+
+    it("should have a returned value", function(){
+      var courier = new Courier(),
+          receiver = jasmine.createSpy("grabActiveLink").andCallFake(function(data){
+            return "this is an active " + data;
+          }),
+          resulter = jasmine.createSpy("resulter");
+
+      courier.receive("grabActiveLink", receiver);
+
+      courier.send("grabActiveLink", "link", resulter);
+
+      expect(receiver).toHaveBeenCalled();
+      expect(resulter.calls[0].args).toEqual(["this is an active link"]);
+    });
+
+    it("should have a returned value even while sending options in", function(){
+      var courier = new Courier(),
+          receiver = jasmine.createSpy("grabLink").andCallFake(function(){
+            return "this is a link";
+          }),
+          resulter = jasmine.createSpy("resulter");
+
+      expect(function(){
+        courier.send("grabLink", {}, {throwOnMissing: false}, resulter);
+      }).not.toThrow();
+
+      expect(resulter).not.toHaveBeenCalled();
+
+      courier.receive("grabLink", receiver);
+
+      courier.send("grabLink", {}, {throwOnMissing: true}, resulter);
+
+      expect(receiver).toHaveBeenCalled();
+      expect(resulter.calls[0].args).toEqual(["this is a link"]);
+    });
   });
 });

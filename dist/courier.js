@@ -5,7 +5,7 @@
 //            See https://github.com/lukelex/courier.js/blob/master/LICENSE
 // ==========================================================================
 
-// Version: 0.3.3 | From: 7-7-2014
+// Version: 0.4.0 | From: 21-7-2014
 
 (function( window ){
   window.Courier = function Courier(){
@@ -22,17 +22,18 @@
       return unsubscribe.bind( {}, subscription );
     };
 
-    this.send = function send( box, message, options ){
+    this.send = function send( box, message, options, callback ){
       var i = 0,
           foundAny = false;
 
-      options = options || { throwOnMissing: true };
+      callback = is( options, "Function" ) ? options : ( callback || function(){} );
+      options = is( options, "Object" ) ? options : { throwOnMissing: true };
 
       fetchSubscriptions( box , function( openers ){
         foundAny = true;
         i = openers.length;
         while ( i-- ) {
-          openers[ i ].opener( message );
+          callback( openers[ i ].opener( message ) );
         }
       });
 
@@ -79,5 +80,9 @@
       return name.toString()
                  .replace(/(^\/|\/$)/g, "");
     }
+  }
+
+  function is( func, type ) {
+    return func && {}.toString.call(func) === "[object " + type + "]";
   }
 })( window );
