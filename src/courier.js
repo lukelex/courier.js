@@ -15,20 +15,20 @@
 
     this.send = function send( box, message, options, callback ){
       var i = 0,
-          foundAny = false;
+          results = [];
 
       callback = is( options, "Function" ) ? options : ( callback || function(){} );
       options = is( options, "Object" ) ? options : { throwOnMissing: true };
 
       fetchSubscriptions( box , function( openers ){
-        foundAny = true;
         i = openers.length;
         while ( i-- ) {
-          callback( openers[ i ].opener( message ) );
+          results.push( openers[ i ].opener( message ) );
         }
+        callback( results );
       });
 
-      if ( !foundAny && options.throwOnMissing === true ) {
+      if ( results.length === 0 && options.throwOnMissing === true ) {
         throw "Courier: No receiver registered for '" + box + "'";
       }
     };

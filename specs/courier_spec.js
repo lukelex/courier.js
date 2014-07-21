@@ -93,7 +93,7 @@ describe("Courier", function(){
           message = "some message",
           receiver = jasmine.createSpy("receiver");
 
-      courier.receive("new-message", receiver)
+      courier.receive("new-message", receiver);
       courier.send("new-message", message);
 
       expect(receiver).toHaveBeenCalledWith(message);
@@ -163,7 +163,7 @@ describe("Courier", function(){
       courier.send("grabActiveLink", "link", resulter);
 
       expect(receiver).toHaveBeenCalled();
-      expect(resulter.calls[0].args).toEqual(["this is an active link"]);
+      expect(resulter.calls[0].args[0]).toEqual(["this is an active link"]);
     });
 
     it("should have a returned value even while sending options in", function(){
@@ -184,7 +184,27 @@ describe("Courier", function(){
       courier.send("grabLink", {}, {throwOnMissing: true}, resulter);
 
       expect(receiver).toHaveBeenCalled();
-      expect(resulter.calls[0].args).toEqual(["this is a link"]);
+      expect(resulter.calls[0].args[0]).toEqual(["this is a link"]);
+    });
+
+    it("should run only once when multiple receivers are triggered", function(){
+      var courier = new Courier(),
+          firstReceiver = jasmine.createSpy("firstReceiver").andCallFake(function(){
+            return 1;
+          }),
+          secondReceiver = jasmine.createSpy("secondReceiver").andCallFake(function(){
+            return 2;
+          }),
+          resulter = jasmine.createSpy("resulter");
+
+      courier.receive("firstReceiver", firstReceiver);
+      courier.receive("secondReceiver", secondReceiver);
+
+      courier.send(/^.+Receiver$/, {}, resulter);
+
+      expect(firstReceiver).toHaveBeenCalled();
+      expect(secondReceiver).toHaveBeenCalled();
+      expect(resulter.calls[0].args[0]).toEqual([1,2]);
     });
   });
 });
