@@ -77,6 +77,18 @@ describe("Courier", function(){
 
       expect(changeItemOpener).toHaveBeenCalled();
     });
+
+		describe("should trigger the #all event on every message", function(){
+			var courier = new Courier(),
+					allSpy = jasmine.createSpy("all");
+
+			courier.receive("all", allSpy);
+			courier.receive("something", function(){});
+
+			courier.send("something");
+
+			expect(allSpy).toHaveBeenCalledWith("something");
+		});
   });
 
   describe("#send", function(){

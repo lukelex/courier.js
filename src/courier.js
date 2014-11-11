@@ -14,38 +14,51 @@
     };
 
     this.send = function send( box, message, options, callback ){
-      var i = 0,
-          results = [];
-
       callback = is( options, "Function" ) ? options : ( callback || function(){} );
       options = is( options, "Object" ) ? options : { throwOnMissing: true };
 
-      fetchSubscriptions( box , function( openers ){
-        i = openers.length;
-        while ( i-- ) {
-          results.push( openers[ i ].opener( message ) );
-        }
-        callback( results );
-      });
-
-      if ( results.length === 0 && options.throwOnMissing === true ) {
-        throw "Courier: No receiver registered for '" + box + "'";
-      }
+			boxFetcherFor( false )
+				.withName( "all", andPassAlongThe( box, callback ) );
+			boxFetcherFor( options.throwOnMissing )
+				.withName( box, andPassAlongThe( message, callback ) );
     };
 
     this.reset = function reset() { subscriptions = {}; }
 
-    function fetchSubscriptions( box, callback ){
-      var senderPattern = new RegExp( box ),
-          receiverPattern;
+		function andPassAlongThe( message, callback ){
+			var	results = [];
 
-      for ( var name in subscriptions ) {
-        receiverPattern = new RegExp( stringify( name ) )
-        if ( senderPattern.exec( stringify( name ) ) ||
-             receiverPattern.exec( stringify( box ) ) ) {
-          callback( subscriptions[ name ] );
-        }
-      }
+			return function( openers ){
+				var i = openers.length;
+
+				while ( i-- ) {
+					results.push( openers[ i ].opener( message ) );
+				}
+
+				return callback( results );
+			}
+		}
+
+		function boxFetcherFor( throwOnMissing ){
+			return {
+				withName: function( box, callback ){
+					var foundOne = false,
+							senderPattern = new RegExp( box ),
+							receiverPattern;
+
+					for ( var name in subscriptions ) {
+						receiverPattern = new RegExp( stringify( name ) );
+
+						if ( senderPattern.exec( stringify( name ) ) || receiverPattern.exec( stringify( box ) ) ) {
+							callback( subscriptions[ name ] );
+							foundOne = true;
+						}
+					}
+					if ( !foundOne && throwOnMissing === true ) {
+						throw "Courier: No receiver registered for '" + box + "'";
+					}
+				}
+			};
     }
 
     function unsubscribe( subscription ){
