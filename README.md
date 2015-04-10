@@ -46,6 +46,5 @@ receiver returned function, like so:
 var unsubscribe = courier.receive("one-time-receiver", function(msg){
   // do some work
   unsubscribe(); // this will tell courier to remove this
-receiver
 });
 ```
