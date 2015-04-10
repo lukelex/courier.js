@@ -3,7 +3,9 @@ var gulp = require("gulp"),
     header = require("gulp-header"),
     concat = require("gulp-concat"),
     uglify = require("gulp-uglify"),
-    pkg = require("./package.json");
+    pkg = require("./package.json"),
+    babel = require("gulp-babel"),
+    sourcemaps = require('gulp-sourcemaps');
 
 var d = new Date();
 var releaseDate = d.getDate() + "-" + (d.getMonth() + 1) + "-" + d.getFullYear()
@@ -23,8 +25,16 @@ gulp.task("test", function(){
       .pipe(jasmine());
 });
 
+gulp.task("es6", function(){
+  gulp.src("src/courier.js")
+  .pipe(babel())
+  .pipe(concat('result.js'))
+  .pipe(gulp.dest('dist'))
+});
+
 gulp.task("pack", function(){
   gulp.src("src/courier.js")
+      .pipe(babel())
       .pipe(concat("courier.js"))
       .pipe(header(banner, { pkg: pkg, date: releaseDate }))
       .pipe(gulp.dest("dist"))

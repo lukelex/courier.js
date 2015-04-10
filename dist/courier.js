@@ -1,88 +1,134 @@
 // ==========================================================================
 // Project:   Courier.js - Simple messaging engine for JavaScript
-// Copyright: Copyright 2014 Lukas Alexandre
+// Copyright: Copyright 2015 Lukas Alexandre
 // License:   Licensed under MIT license
 //            See https://github.com/lukelex/courier.js/blob/master/LICENSE
 // ==========================================================================
 
-// Version: 0.4.0 | From: 21-7-2014
+// Version: 0.4.0 | From: 11-4-2015
 
-(function( window ){
-  window.Courier = function Courier(){
-    var subscriptions = {};
+"use strict";
 
-    this.receive = function receive( box, opener ){
-      var subscription = createSubscription({
-        box: stringify( box ), opener: opener
-      });
+var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
 
-      subscriptions[ box ] = ( subscriptions[ box ] || [] );
-      subscriptions[ box ].push( subscription );
+var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
-      return unsubscribe.bind( {}, subscription );
-    };
+(function (window) {
+  var Courier = (function () {
+    function Courier() {
+      _classCallCheck(this, Courier);
 
-    this.send = function send( box, message, options, callback ){
-      var i = 0,
-          results = [];
+      this.subscriptions = {};
+    }
 
-      callback = is( options, "Function" ) ? options : ( callback || function(){} );
-      options = is( options, "Object" ) ? options : { throwOnMissing: true };
+    _createClass(Courier, [{
+      key: "receive",
+      value: function receive(box, opener) {
+        var subscription = createSubscription({
+          box: stringify(box), opener: opener
+        });
 
-      fetchSubscriptions( box , function( openers ){
-        i = openers.length;
-        while ( i-- ) {
-          results.push( openers[ i ].opener( message ) );
+        this.subscriptions[box] = this.subscriptions[box] || [];
+        this.subscriptions[box].push(subscription);
+
+        return unsubscribe.bind(this, subscription);
+      }
+    }, {
+      key: "send",
+      value: function send(box, message, options, callback) {
+        callback = is(options, "Function") ? options : callback || function () {};
+        options = is(options, "Object") ? options : { throwOnMissing: true };
+
+        new BoxFinder(this.subscriptions).withName("all", andPassAlongThe(box, callback))(false).withName(box, andPassAlongThe(message, callback))(options.throwOnMissing);
+      }
+    }, {
+      key: "reset",
+      value: function reset() {
+        this.subscriptions = {};
+      }
+    }]);
+
+    return Courier;
+  })();
+
+  var BoxFinder = (function () {
+    function BoxFinder(subscriptions) {
+      _classCallCheck(this, BoxFinder);
+
+      this.subscriptions = subscriptions;
+    }
+
+    _createClass(BoxFinder, [{
+      key: "withName",
+      value: function withName(box, callback) {
+        var _this = this;
+
+        var senderPattern = new RegExp(box),
+            receiverPattern,
+            receivers = [];
+
+        for (var name in this.subscriptions) {
+          receiverPattern = new RegExp(stringify(name));
+
+          if (senderPattern.exec(stringify(name)) || receiverPattern.exec(stringify(box))) {
+            receivers.push(this.subscriptions[name]);
+          }
         }
-        callback( results );
-      });
 
-      if ( results.length === 0 && options.throwOnMissing === true ) {
-        throw "Courier: No receiver registered for '" + box + "'";
+        return function (throwOnMissing) {
+          if (receivers.length === 0 && throwOnMissing === true) {
+            throw "Courier: No receiver registered for '" + box + "'";
+          }
+
+          receivers.forEach(function (receiver) {
+            callback(receiver);
+          });
+
+          return _this;
+        };
       }
-    };
+    }]);
 
-    this.reset = function reset() { subscriptions = {}; }
+    return BoxFinder;
+  })();
 
-    function fetchSubscriptions( box, callback ){
-      var senderPattern = new RegExp( box ),
-          receiverPattern;
+  function unsubscribe(subscription) {
+    this.subscriptions[subscription.box] = this.subscriptions[subscription.box].filter(function (subs) {
+      return subs.id !== subscription.id;
+    });
 
-      for ( var name in subscriptions ) {
-        receiverPattern = new RegExp( stringify( name ) )
-        if ( senderPattern.exec( stringify( name ) ) ||
-             receiverPattern.exec( stringify( box ) ) ) {
-          callback( subscriptions[ name ] );
-        }
-      }
-    }
-
-    function unsubscribe( subscription ){
-      subscriptions[ subscription.box ] =
-      subscriptions[ subscription.box ].filter( function( subs ){
-        return subs.id !== subscription.id;
-      });
-
-      if ( subscriptions[ subscription.box ].length === 0 ) {
-        delete subscriptions[ subscription.box ];
-      }
-    }
-
-    function createSubscription( spec ){
-      spec.id = "#" + Math.floor(
-        Math.random()*16777215
-      ).toString( 16 );
-
-      return spec;
-    }
-
-    function stringify( name ){
-      return name.toString()
-                 .replace(/(^\/|\/$)/g, "");
+    if (this.subscriptions[subscription.box].length === 0) {
+      delete this.subscriptions[subscription.box];
     }
   }
 
-  function is( func, type ) {
-    return func && {}.toString.call(func) === "[object " + type + "]";
+  function createSubscription(spec) {
+    spec.id = "#" + Math.floor(Math.random() * 16777215).toString(16);
+
+    return spec;
   }
-})( window );
+
+  function stringify(name) {
+    return name.toString().replace(/(^\/|\/$)/g, "");
+  }
+
+  function andPassAlongThe(message, callback) {
+    var results = [];
+
+    return function (openers) {
+      var i = openers.length;
+
+      while (i--) {
+        results.push(openers[i].opener(message));
+      }
+
+      return callback(results);
+    };
+  }
+
+  function is(func, type) {
+    return func && ({}).toString.call(func) === "[object " + type + "]";
+  }
+
+  window.Courier = Courier;
+})(window);
