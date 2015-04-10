@@ -1,6 +1,6 @@
 #Courier.js
 
-Simple pub-sub for JavaScript.
+Simple and flexible pub-sub for JavaScript.
 
 ##Using it
 ```javascript
@@ -20,14 +20,14 @@ courier.send("new-message", {
   your: "message"
 });
 
-// to avoid an exeception while sending messages
-// not yet defined receivers set throwOnMissing: false
+// By default, an exception will be thrown if the specified
+// receiver isn't found. To avoid this set throwOnMissing: false
 courier.send("new-message", {
   your: "delegation"
 }, {throwOnMissing: false});
 
-// you can also subscribe and send with Regular expressions
-
+// Regular Expressions can also be used as both `receiver` and
+// `sender` identifiers
 courier.send(/[Aa]\s(regex)?\ssender/, {
   your: "message"
 });
@@ -39,11 +39,13 @@ courier.receive(/[Aa]\s(regex)?\sreceiver/, function(msg){
 
 ###Unsubscribe
 
-Courier allows you to unsubscribe to any message with the given receiver returned function, like so:
+Courier allows you to unsubscribe to any message with the given
+receiver returned function, like so:
 
 ```javascript
 var unsubscribe = courier.receive("one-time-receiver", function(msg){
-  // do something and unsubscribe
-  unsubscribe() // this will notofy courier to remove this hook
+  // do some work
+  unsubscribe(); // this will tell courier to remove this
+receiver
 });
 ```
