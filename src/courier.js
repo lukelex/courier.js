@@ -20,8 +20,10 @@
       options = is( options, "Object" ) ? options : { throwOnMissing: true };
 
       new BoxFinder( this.subscriptions )
-        .withName( "all", andPassAlongThe( box, callback ) )( false )
-        .withName( box, andPassAlongThe( message, callback ) )( options.throwOnMissing );
+        .withName( "all", andPassAlongThe( box, callback ) )
+        .dispatch( box, { throwOnMissing: false } )
+        .withName( box, andPassAlongThe( message, callback ) )
+        .dispatch( box, options );
     }
 
     reset() { this.subscriptions = {}; }
@@ -45,17 +47,27 @@
         }
       }
 
-      return ( throwOnMissing ) => {
-        if ( receivers.length === 0 && throwOnMissing === true ) {
-          throw "Courier: No receiver registered for '" + box + "'";
-        }
+      return new ReceiverIterator(receivers, callback, this);
+    }
+  }
 
-        receivers.forEach( function( receiver ) {
-          callback( receiver );
-        });
+  class ReceiverIterator {
+    constructor( receivers, callback, context ) {
+      this.receivers = receivers;
+      this.callback = callback;
+      this.context = context;
+    }
 
-        return this;
+    dispatch( box, options ) {
+      if ( this.receivers.length === 0 && options.throwOnMissing === true ) {
+        throw "Courier: No receiver registered for '" + box + "'";
       }
+
+      this.receivers.forEach( ( receiver ) => {
+        this.callback( receiver );
+      });
+
+      return this.context;
     }
   }
 

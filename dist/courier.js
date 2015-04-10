@@ -39,7 +39,7 @@ var _createClass = (function () { function defineProperties(target, props) { for
         callback = is(options, "Function") ? options : callback || function () {};
         options = is(options, "Object") ? options : { throwOnMissing: true };
 
-        new BoxFinder(this.subscriptions).withName("all", andPassAlongThe(box, callback))(false).withName(box, andPassAlongThe(message, callback))(options.throwOnMissing);
+        new BoxFinder(this.subscriptions).withName("all", andPassAlongThe(box, callback)).dispatch(box, { throwOnMissing: false }).withName(box, andPassAlongThe(message, callback)).dispatch(box, options);
       }
     }, {
       key: "reset",
@@ -61,8 +61,6 @@ var _createClass = (function () { function defineProperties(target, props) { for
     _createClass(BoxFinder, [{
       key: "withName",
       value: function withName(box, callback) {
-        var _this = this;
-
         var senderPattern = new RegExp(box),
             receiverPattern,
             receivers = [];
@@ -75,21 +73,40 @@ var _createClass = (function () { function defineProperties(target, props) { for
           }
         }
 
-        return function (throwOnMissing) {
-          if (receivers.length === 0 && throwOnMissing === true) {
-            throw "Courier: No receiver registered for '" + box + "'";
-          }
-
-          receivers.forEach(function (receiver) {
-            callback(receiver);
-          });
-
-          return _this;
-        };
+        return new ReceiverIterator(receivers, callback, this);
       }
     }]);
 
     return BoxFinder;
+  })();
+
+  var ReceiverIterator = (function () {
+    function ReceiverIterator(receivers, callback, context) {
+      _classCallCheck(this, ReceiverIterator);
+
+      this.receivers = receivers;
+      this.callback = callback;
+      this.context = context;
+    }
+
+    _createClass(ReceiverIterator, [{
+      key: "dispatch",
+      value: function dispatch(box, options) {
+        var _this = this;
+
+        if (this.receivers.length === 0 && options.throwOnMissing === true) {
+          throw "Courier: No receiver registered for '" + box + "'";
+        }
+
+        this.receivers.forEach(function (receiver) {
+          _this.callback(receiver);
+        });
+
+        return this.context;
+      }
+    }]);
+
+    return ReceiverIterator;
   })();
 
   function unsubscribe(subscription) {
