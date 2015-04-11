@@ -1,13 +1,11 @@
-(function( window ){
+(function( window ) {
   class Courier {
     constructor() {
       this.subscriptions = {};
     }
 
     receive( box, opener ) {
-      var subscription = createSubscription({
-        box: stringify( box ), opener: opener
-      });
+      var subscription = new Subscription( box, opener );
 
       this.subscriptions[ box ] = ( this.subscriptions[ box ] || [] );
       this.subscriptions[ box ].push( subscription );
@@ -27,6 +25,14 @@
     }
 
     reset() { this.subscriptions = {}; }
+  }
+
+  class Subscription {
+    constructor( box, handler ) {
+      this.id = "#" + Math.floor( Math.random()*16777215 ).toString( 16 );
+      this.box = stringify( box );
+      this.handler = handler;
+    }
   }
 
   class BoxFinder {
@@ -71,9 +77,9 @@
     }
   }
 
-  function unsubscribe( subscription ){
+  function unsubscribe( subscription ) {
     this.subscriptions[ subscription.box ] =
-      this.subscriptions[ subscription.box ].filter( function( subs ){
+      this.subscriptions[ subscription.box ].filter( function( subs ) {
         return subs.id !== subscription.id;
       });
 
@@ -82,23 +88,16 @@
     }
   }
 
-  function createSubscription( spec ){
-    spec.id = "#" + Math.floor( Math.random()*16777215 ).toString( 16 );
-
-    return spec;
+  function stringify( name ) {
+    return name.toString().replace( /(^\/|\/$)/g, "" );
   }
 
-  function stringify( name ){
-    return name.toString()
-      .replace(/(^\/|\/$)/g, "");
-  }
-
-  function andPassAlongThe( message, callback ){
+  function andPassAlongThe( message, callback ) {
     var results = [];
 
-    return function( openers ){
-      openers.forEach( function( opener) {
-        results.push( opener.opener( message ) );
+    return function( subscriptions ) {
+      subscriptions.forEach( function( subscription ) {
+        results.push( subscription.handler( message ) );
       });
 
       return callback( results );

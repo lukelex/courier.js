@@ -24,9 +24,7 @@ var _createClass = (function () { function defineProperties(target, props) { for
     _createClass(Courier, [{
       key: "receive",
       value: function receive(box, opener) {
-        var subscription = createSubscription({
-          box: stringify(box), opener: opener
-        });
+        var subscription = new Subscription(box, opener);
 
         this.subscriptions[box] = this.subscriptions[box] || [];
         this.subscriptions[box].push(subscription);
@@ -50,6 +48,14 @@ var _createClass = (function () { function defineProperties(target, props) { for
 
     return Courier;
   })();
+
+  var Subscription = function Subscription(box, handler) {
+    _classCallCheck(this, Subscription);
+
+    this.id = "#" + Math.floor(Math.random() * 16777215).toString(16);
+    this.box = stringify(box);
+    this.handler = handler;
+  };
 
   var BoxFinder = (function () {
     function BoxFinder(subscriptions) {
@@ -119,12 +125,6 @@ var _createClass = (function () { function defineProperties(target, props) { for
     }
   }
 
-  function createSubscription(spec) {
-    spec.id = "#" + Math.floor(Math.random() * 16777215).toString(16);
-
-    return spec;
-  }
-
   function stringify(name) {
     return name.toString().replace(/(^\/|\/$)/g, "");
   }
@@ -132,9 +132,9 @@ var _createClass = (function () { function defineProperties(target, props) { for
   function andPassAlongThe(message, callback) {
     var results = [];
 
-    return function (openers) {
-      openers.forEach(function (opener) {
-        results.push(opener.opener(message));
+    return function (subscriptions) {
+      subscriptions.forEach(function (subscription) {
+        results.push(subscription.handler(message));
       });
 
       return callback(results);
