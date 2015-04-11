@@ -83,9 +83,7 @@
   }
 
   function createSubscription( spec ){
-    spec.id = "#" + Math.floor(
-        Math.random()*16777215
-        ).toString( 16 );
+    spec.id = "#" + Math.floor( Math.random()*16777215 ).toString( 16 );
 
     return spec;
   }
@@ -99,11 +97,9 @@
     var results = [];
 
     return function( openers ){
-      var i = openers.length;
-
-      while ( i-- ) {
-        results.push( openers[ i ].opener( message ) );
-      }
+      openers.forEach( function( opener) {
+        results.push( opener.opener( message ) );
+      });
 
       return callback( results );
     }

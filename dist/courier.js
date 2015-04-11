@@ -133,11 +133,9 @@ var _createClass = (function () { function defineProperties(target, props) { for
     var results = [];
 
     return function (openers) {
-      var i = openers.length;
-
-      while (i--) {
-        results.push(openers[i].opener(message));
-      }
+      openers.forEach(function (opener) {
+        results.push(opener.opener(message));
+      });
 
       return callback(results);
     };
