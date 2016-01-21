@@ -1,9 +1,5 @@
-GLOBAL.window = {};
-
-require("babel-core/register");
-require("../src/courier");
-
-var Courier = window.Courier;
+require('babel-core/register')
+var Courier = require("../src/courier");
 
 describe("Courier", function(){
   describe("#receive", function(){
