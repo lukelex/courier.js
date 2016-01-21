@@ -1,112 +1,110 @@
-(function( window ) {
-  class Courier {
-    constructor() {
-      this.subscriptions = {};
-    }
-
-    receive( box, opener ) {
-      var subscription = new Subscription( box, opener );
-
-      this.subscriptions[ box ] = ( this.subscriptions[ box ] || [] );
-      this.subscriptions[ box ].push( subscription );
-
-      return unsubscribe.bind( this, subscription );
-    }
-
-    send( box, message, options, callback ) {
-      callback = is( options, "Function" ) ? options : ( callback || function(){} );
-      options = is( options, "Object" ) ? options : { throwOnMissing: true };
-
-      new BoxFinder( this.subscriptions )
-        .withName( "all", andPassAlongThe( box, callback ) )
-        .dispatch( box, { throwOnMissing: false } )
-        .withName( box, andPassAlongThe( message, callback ) )
-        .dispatch( box, options );
-    }
-
-    reset() { this.subscriptions = {}; }
+class Courier {
+  constructor() {
+    this.subscriptions = {};
   }
 
-  class Subscription {
-    constructor( box, handler ) {
-      this.id = "#" + Math.floor( Math.random()*16777215 ).toString( 16 );
-      this.box = stringify( box );
-      this.handler = handler;
-    }
+  receive( box, opener ) {
+    var subscription = new Subscription( box, opener );
+
+    this.subscriptions[ box ] = ( this.subscriptions[ box ] || [] );
+    this.subscriptions[ box ].push( subscription );
+
+    return unsubscribe.bind( this, subscription );
   }
 
-  class BoxFinder {
-    constructor( subscriptions ) {
-      this.subscriptions = subscriptions;
-    }
+  send( box, message, options, callback ) {
+    callback = is( options, "Function" ) ? options : ( callback || function(){} );
+    options = is( options, "Object" ) ? options : { throwOnMissing: true };
 
-    withName( box, callback ) {
-      var senderPattern = new RegExp( box ),
-          receiverPattern,
-          receivers = [];
+    new BoxFinder( this.subscriptions )
+      .withName( "all", andPassAlongThe( box, callback ) )
+      .dispatch( box, { throwOnMissing: false } )
+      .withName( box, andPassAlongThe( message, callback ) )
+      .dispatch( box, options );
+  }
 
-      for ( var name in this.subscriptions ) {
-        receiverPattern = new RegExp( stringify( name ) );
+  reset() { this.subscriptions = {}; }
+}
 
-        if ( senderPattern.exec( stringify( name ) ) || receiverPattern.exec( stringify( box ) ) ) {
-          receivers.push( this.subscriptions[ name ] );
-        }
+class Subscription {
+  constructor( box, handler ) {
+    this.id = "#" + Math.floor( Math.random()*16777215 ).toString( 16 );
+    this.box = stringify( box );
+    this.handler = handler;
+  }
+}
+
+class BoxFinder {
+  constructor( subscriptions ) {
+    this.subscriptions = subscriptions;
+  }
+
+  withName( box, callback ) {
+    var senderPattern = new RegExp( box ),
+        receiverPattern,
+        receivers = [];
+
+    for ( var name in this.subscriptions ) {
+      receiverPattern = new RegExp( stringify( name ) );
+
+      if ( senderPattern.exec( stringify( name ) ) || receiverPattern.exec( stringify( box ) ) ) {
+        receivers.push( this.subscriptions[ name ] );
       }
-
-      return new ReceiverIterator(receivers, callback, this);
-    }
-  }
-
-  class ReceiverIterator {
-    constructor( receivers, callback, context ) {
-      this.receivers = receivers;
-      this.callback = callback;
-      this.context = context;
     }
 
-    dispatch( box, options ) {
-      if ( this.receivers.length === 0 && options.throwOnMissing === true ) {
-        throw "Courier: No receiver registered for '" + box + "'";
-      }
+    return new ReceiverIterator(receivers, callback, this);
+  }
+}
 
-      this.receivers.forEach( ( receiver ) => {
-        this.callback( receiver );
-      });
+class ReceiverIterator {
+  constructor( receivers, callback, context ) {
+    this.receivers = receivers;
+    this.callback = callback;
+    this.context = context;
+  }
 
-      return this.context;
+  dispatch( box, options ) {
+    if ( this.receivers.length === 0 && options.throwOnMissing === true ) {
+      throw "Courier: No receiver registered for '" + box + "'";
     }
+
+    this.receivers.forEach( ( receiver ) => {
+      this.callback( receiver );
+    });
+
+    return this.context;
   }
+}
 
-  function unsubscribe( subscription ) {
-    this.subscriptions[ subscription.box ] =
-      this.subscriptions[ subscription.box ].filter( function( subs ) {
-        return subs.id !== subscription.id;
-      });
+function unsubscribe( subscription ) {
+  this.subscriptions[ subscription.box ] =
+    this.subscriptions[ subscription.box ].filter( function( subs ) {
+      return subs.id !== subscription.id;
+    });
 
-    if ( this.subscriptions[ subscription.box ].length === 0 ) {
-      delete this.subscriptions[ subscription.box ];
-    }
+  if ( this.subscriptions[ subscription.box ].length === 0 ) {
+    delete this.subscriptions[ subscription.box ];
   }
+}
 
-  function stringify( name ) {
-    return name.toString().replace( /(^\/|\/$)/g, "" );
+function stringify( name ) {
+  return name.toString().replace( /(^\/|\/$)/g, "" );
+}
+
+function andPassAlongThe( message, callback ) {
+  var results = [];
+
+  return function( subscriptions ) {
+    subscriptions.forEach( function( subscription ) {
+      results.push( subscription.handler( message ) );
+    });
+
+    return callback( results );
   }
+}
 
-  function andPassAlongThe( message, callback ) {
-    var results = [];
+function is( func, type ) {
+  return func && {}.toString.call(func) === "[object " + type + "]";
+}
 
-    return function( subscriptions ) {
-      subscriptions.forEach( function( subscription ) {
-        results.push( subscription.handler( message ) );
-      });
-
-      return callback( results );
-    }
-  }
-
-  function is( func, type ) {
-    return func && {}.toString.call(func) === "[object " + type + "]";
-  }
-
-  window.Courier = Courier;
-})( window );
+export default Courier;
