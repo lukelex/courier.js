@@ -1,3 +1,33 @@
+import Subscription from './lib/Subscription';
+import BoxFinder from './lib/BoxFinder';
+
+function unsubscribe( subscription ) {
+  this.subscriptions[ subscription.box ] =
+    this.subscriptions[ subscription.box ].filter( function( subs ) {
+      return subs.id !== subscription.id;
+    });
+
+  if ( this.subscriptions[ subscription.box ].length === 0 ) {
+    delete this.subscriptions[ subscription.box ];
+  }
+}
+
+function andPassAlongThe( message, callback ) {
+  const results = [];
+
+  return function( subscriptions ) {
+    subscriptions.forEach( function( subscription ) {
+      results.push( subscription.handler( message ) );
+    });
+
+    return callback( results );
+  }
+}
+
+function is( func, type ) {
+  return func && {}.toString.call(func) === "[object " + type + "]";
+}
+
 class Courier {
   constructor() {
     this.subscriptions = {};
@@ -26,85 +56,6 @@ class Courier {
   reset() { this.subscriptions = {}; }
 }
 
-class Subscription {
-  constructor( box, handler ) {
-    this.id = "#" + Math.floor( Math.random()*16777215 ).toString( 16 );
-    this.box = stringify( box );
-    this.handler = handler;
-  }
-}
-
-class BoxFinder {
-  constructor( subscriptions ) {
-    this.subscriptions = subscriptions;
-  }
-
-  withName( box, callback ) {
-    var senderPattern = new RegExp( box ),
-        receiverPattern,
-        receivers = [];
-
-    for ( var name in this.subscriptions ) {
-      receiverPattern = new RegExp( stringify( name ) );
-
-      if ( senderPattern.exec( stringify( name ) ) || receiverPattern.exec( stringify( box ) ) ) {
-        receivers.push( this.subscriptions[ name ] );
-      }
-    }
-
-    return new ReceiverIterator(receivers, callback, this);
-  }
-}
-
-class ReceiverIterator {
-  constructor( receivers, callback, context ) {
-    this.receivers = receivers;
-    this.callback = callback;
-    this.context = context;
-  }
-
-  dispatch( box, options ) {
-    if ( this.receivers.length === 0 && options.throwOnMissing === true ) {
-      throw "Courier: No receiver registered for '" + box + "'";
-    }
-
-    this.receivers.forEach( ( receiver ) => {
-      this.callback( receiver );
-    });
-
-    return this.context;
-  }
-}
-
-function unsubscribe( subscription ) {
-  this.subscriptions[ subscription.box ] =
-    this.subscriptions[ subscription.box ].filter( function( subs ) {
-      return subs.id !== subscription.id;
-    });
-
-  if ( this.subscriptions[ subscription.box ].length === 0 ) {
-    delete this.subscriptions[ subscription.box ];
-  }
-}
-
-function stringify( name ) {
-  return name.toString().replace( /(^\/|\/$)/g, "" );
-}
-
-function andPassAlongThe( message, callback ) {
-  var results = [];
-
-  return function( subscriptions ) {
-    subscriptions.forEach( function( subscription ) {
-      results.push( subscription.handler( message ) );
-    });
-
-    return callback( results );
-  }
-}
-
-function is( func, type ) {
-  return func && {}.toString.call(func) === "[object " + type + "]";
-}
-
-export default Courier;
+// Using CommonJS module exporting to prevent
+// Babel to wrap it in 'default' property of the module
+module.exports = Courier;
