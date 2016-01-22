@@ -38,8 +38,8 @@ gulp.task("es6", function(){
 
 gulp.task("pack", function () {
   return browserify(["./src/courier.js"], {
-    standalone: "Courier",
-  }).transform(babelify)
+    standalone: 'Courier',
+  }).transform(babelify, { presets: ["es2015"] })
     .bundle()
     .pipe(source("courier.js"))
     .pipe(buffer())
