@@ -1,11 +1,15 @@
-var gulp = require("gulp"),
-    jasmine = require("gulp-jasmine"),
-    header = require("gulp-header"),
-    concat = require("gulp-concat"),
-    uglify = require("gulp-uglify"),
-    pkg = require("./package.json"),
-    babel = require("gulp-babel"),
-    sourcemaps = require('gulp-sourcemaps');
+var gulp = require("gulp");
+var jasmine = require("gulp-jasmine");
+var header = require("gulp-header");
+var concat = require("gulp-concat");
+var uglify = require("gulp-uglify");
+var buffer = require("vinyl-buffer");
+var pkg = require("./package.json");
+var babel = require("gulp-babel");
+var browserify = require("browserify");
+var babelify = require("babelify");
+var sourcemaps = require("gulp-sourcemaps");
+var source = require("vinyl-source-stream");
 
 var d = new Date();
 var releaseDate = d.getDate() + "-" + (d.getMonth() + 1) + "-" + d.getFullYear()
@@ -28,17 +32,24 @@ gulp.task("test", function(){
 gulp.task("es6", function(){
   gulp.src("src/courier.js")
   .pipe(babel())
-  .pipe(concat('result.js'))
-  .pipe(gulp.dest('dist'))
+  .pipe(concat("result.js"))
+  .pipe(gulp.dest("dist"))
 });
 
-gulp.task("pack", function(){
-  gulp.src("src/courier.js")
-      .pipe(babel())
-      .pipe(concat("courier.js"))
-      .pipe(header(banner, { pkg: pkg, date: releaseDate }))
-      .pipe(gulp.dest("dist"))
-      .pipe(concat("courier.min.js"))
-      .pipe(uglify())
-      .pipe(gulp.dest("dist"));
+gulp.task("pack", function () {
+  return browserify(["./src/courier.js"], {
+    standalone: 'Courier',
+  }).transform(babelify, {
+    presets: ["es2015"],
+    plugins: ["add-module-exports"],
+  }).bundle()
+    .pipe(source("courier.js"))
+    .pipe(buffer())
+    .pipe(header(banner, { pkg: pkg, date: releaseDate }))
+    .pipe(gulp.dest("./dist"))
+    .pipe(concat("courier.min.js"))
+    .pipe(sourcemaps.init())
+    .pipe(uglify())
+    .pipe(sourcemaps.write("./"))
+    .pipe(gulp.dest("./dist"));
 });

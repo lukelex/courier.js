@@ -1,9 +1,5 @@
-GLOBAL.window = {};
-
-require("babel/register");
-require("../src/courier");
-
-var Courier = window.Courier;
+require('babel-core/register')
+var Courier = require("../src/courier");
 
 describe("Courier", function(){
   describe("#receive", function(){
@@ -18,6 +14,24 @@ describe("Courier", function(){
 
       courier.send(box);
       expect(opener).toHaveBeenCalled();
+    });
+
+    it("should not receive when another box with similar name is called", function(){
+      var courier = new Courier(),
+          box = "create-item",
+          box2 = "item",
+          opener = jasmine.createSpy("createBoxOpener"),
+          opener2 = jasmine.createSpy("createBoxOpener2");
+
+      courier.receive(box, opener);
+      courier.receive(box2, opener2);
+
+      expect(opener).not.toHaveBeenCalled();
+      expect(opener2).not.toHaveBeenCalled();
+
+      courier.send(box2);
+      expect(opener).not.toHaveBeenCalled();
+      expect(opener2).toHaveBeenCalled();
     });
 
     it("should be able to send to multiple boxes", function(){
