@@ -35,9 +35,11 @@ export default class Courier {
 
   receive( box, opener ) {
     var subscription = new Subscription( box, opener );
+    var name = box.toString();
 
-    this.subscriptions[ box ] = ( this.subscriptions[ box ] || [] );
-    this.subscriptions[ box ].push( subscription );
+    this.subscriptions[ name ] = ( this.subscriptions[ name ] || [] );
+    this.subscriptions[ name ].box = (this.subscriptions[ name ].box || box);
+    this.subscriptions[ name ].push( subscription );
 
     return unsubscribe.bind( this, subscription );
   }

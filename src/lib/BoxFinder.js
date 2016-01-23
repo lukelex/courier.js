@@ -1,5 +1,19 @@
 import ReceiverIterator from './ReceiverIterator';
-import { stringify } from './helpers';
+import { typeOf } from './helpers';
+
+function testSubscription(senderPattern, receiverPattern) {
+  if (typeOf(senderPattern) === typeOf(receiverPattern)) {
+    return typeOf(senderPattern) !== 'regexp' && senderPattern === receiverPattern;
+  }
+
+  if (typeOf(senderPattern) === 'regexp') {
+    return senderPattern.test(receiverPattern);
+  }
+
+  if (typeOf(receiverPattern) === 'regexp') {
+    return receiverPattern.test(senderPattern);
+  }
+}
 
 export default class BoxFinder {
   constructor( subscriptions ) {
@@ -7,17 +21,16 @@ export default class BoxFinder {
   }
 
   withName( box, callback ) {
-    var senderPattern = new RegExp( box ),
-        receiverPattern,
+    var senderPattern = box,
         receivers = [];
 
-    for ( var name in this.subscriptions ) {
-      receiverPattern = new RegExp( stringify( name ) );
+    Object.keys(this.subscriptions).forEach((name) => {
+      var receiverPattern = this.subscriptions[ name ].box;
 
-      if ( senderPattern.exec( stringify( name ) ) || receiverPattern.exec( stringify( box ) ) ) {
-        receivers.push( this.subscriptions[ name ] );
+      if (testSubscription(senderPattern, receiverPattern)) {
+        receivers.push(this.subscriptions[ name ]);
       }
-    }
+    });
 
     return new ReceiverIterator(receivers, callback, this);
   }
