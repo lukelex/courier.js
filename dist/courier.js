@@ -5,12 +5,16 @@
 //            See https://github.com/lukelex/courier.js/blob/master/LICENSE
 // ==========================================================================
 
-// Version: 0.5.0 | From: 22-1-2016
+// Version: 0.5.0 | From: 23-1-2016
 
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.Courier = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
 
 var _Subscription = require('./lib/Subscription');
 
@@ -61,9 +65,11 @@ var Courier = function () {
     key: 'receive',
     value: function receive(box, opener) {
       var subscription = new _Subscription2.default(box, opener);
+      var name = box.toString();
 
-      this.subscriptions[box] = this.subscriptions[box] || [];
-      this.subscriptions[box].push(subscription);
+      this.subscriptions[name] = this.subscriptions[name] || [];
+      this.subscriptions[name].box = this.subscriptions[name].box || box;
+      this.subscriptions[name].push(subscription);
 
       return unsubscribe.bind(this, subscription);
     }
@@ -85,10 +91,8 @@ var Courier = function () {
   return Courier;
 }();
 
-// Using CommonJS module exporting to prevent
-// Babel to wrap it in 'default' property of the module
-
-module.exports = Courier;
+exports.default = Courier;
+module.exports = exports['default'];
 
 },{"./lib/BoxFinder":2,"./lib/Subscription":4}],2:[function(require,module,exports){
 'use strict';
@@ -109,6 +113,20 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+function testSubscription(senderPattern, receiverPattern) {
+  if ((0, _helpers.typeOf)(senderPattern) === (0, _helpers.typeOf)(receiverPattern)) {
+    return (0, _helpers.typeOf)(senderPattern) !== 'regexp' && senderPattern === receiverPattern;
+  }
+
+  if ((0, _helpers.typeOf)(senderPattern) === 'regexp') {
+    return senderPattern.test(receiverPattern);
+  }
+
+  if ((0, _helpers.typeOf)(receiverPattern) === 'regexp') {
+    return receiverPattern.test(senderPattern);
+  }
+}
+
 var BoxFinder = function () {
   function BoxFinder(subscriptions) {
     _classCallCheck(this, BoxFinder);
@@ -119,17 +137,18 @@ var BoxFinder = function () {
   _createClass(BoxFinder, [{
     key: 'withName',
     value: function withName(box, callback) {
-      var senderPattern = new RegExp(box),
-          receiverPattern,
+      var _this = this;
+
+      var senderPattern = box,
           receivers = [];
 
-      for (var name in this.subscriptions) {
-        receiverPattern = new RegExp((0, _helpers.stringify)(name));
+      Object.keys(this.subscriptions).forEach(function (name) {
+        var receiverPattern = _this.subscriptions[name].box;
 
-        if (senderPattern.exec((0, _helpers.stringify)(name)) || receiverPattern.exec((0, _helpers.stringify)(box))) {
-          receivers.push(this.subscriptions[name]);
+        if (testSubscription(senderPattern, receiverPattern)) {
+          receivers.push(_this.subscriptions[name]);
         }
-      }
+      });
 
       return new _ReceiverIterator2.default(receivers, callback, this);
     }
@@ -139,6 +158,7 @@ var BoxFinder = function () {
 }();
 
 exports.default = BoxFinder;
+module.exports = exports['default'];
 
 },{"./ReceiverIterator":3,"./helpers":5}],3:[function(require,module,exports){
 "use strict";
@@ -181,6 +201,7 @@ var ReceiverIterator = function () {
 }();
 
 exports.default = ReceiverIterator;
+module.exports = exports['default'];
 
 },{}],4:[function(require,module,exports){
 "use strict";
@@ -189,29 +210,38 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _helpers = require("./helpers");
-
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var Subscription = function Subscription(box, handler) {
   _classCallCheck(this, Subscription);
 
   this.id = "#" + Math.floor(Math.random() * 16777215).toString(16);
-  this.box = (0, _helpers.stringify)(box);
+  this.box = box;
   this.handler = handler;
 };
 
 exports.default = Subscription;
+module.exports = exports['default'];
 
-},{"./helpers":5}],5:[function(require,module,exports){
-"use strict";
+},{}],5:[function(require,module,exports){
+'use strict';
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.stringify = stringify;
-function stringify(name) {
-  return name.toString().replace(/(^\/|\/$)/g, "");
+exports.typeOf = typeOf;
+function typeOf(obj) {
+  if (typeof obj === 'string' || obj instanceof String) {
+    return 'string';
+  }
+
+  if (obj instanceof RegExp) {
+    return 'regexp';
+  }
+
+  return typeof obj === 'undefined' ? 'undefined' : _typeof(obj);
 }
 
 },{}]},{},[1])(1)
