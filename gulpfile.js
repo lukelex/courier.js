@@ -39,8 +39,10 @@ gulp.task("es6", function(){
 gulp.task("pack", function () {
   return browserify(["./src/courier.js"], {
     standalone: 'Courier',
-  }).transform(babelify, { presets: ["es2015"] })
-    .bundle()
+  }).transform(babelify, {
+    presets: ["es2015"],
+    plugins: ["add-module-exports"],
+  }).bundle()
     .pipe(source("courier.js"))
     .pipe(buffer())
     .pipe(header(banner, { pkg: pkg, date: releaseDate }))

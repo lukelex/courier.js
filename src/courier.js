@@ -28,7 +28,7 @@ function is( func, type ) {
   return func && {}.toString.call(func) === "[object " + type + "]";
 }
 
-class Courier {
+export default class Courier {
   constructor() {
     this.subscriptions = {};
   }
@@ -55,7 +55,3 @@ class Courier {
 
   reset() { this.subscriptions = {}; }
 }
-
-// Using CommonJS module exporting to prevent
-// Babel to wrap it in 'default' property of the module
-module.exports = Courier;
