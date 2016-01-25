@@ -1,6 +1,6 @@
 GLOBAL.window = {};
 
-require("babel/register");
+require("babel-core/register");
 require("../src/courier");
 
 var Courier = window.Courier;

@@ -5,7 +5,7 @@ var gulp = require("gulp"),
     uglify = require("gulp-uglify"),
     pkg = require("./package.json"),
     babel = require("gulp-babel"),
-    sourcemaps = require('gulp-sourcemaps');
+    sourcemaps = require("gulp-sourcemaps");
 
 var d = new Date();
 var releaseDate = d.getDate() + "-" + (d.getMonth() + 1) + "-" + d.getFullYear()
@@ -28,8 +28,8 @@ gulp.task("test", function(){
 gulp.task("es6", function(){
   gulp.src("src/courier.js")
   .pipe(babel())
-  .pipe(concat('result.js'))
-  .pipe(gulp.dest('dist'))
+  .pipe(concat("result.js"))
+  .pipe(gulp.dest("dist"))
 });
 
 gulp.task("pack", function(){
